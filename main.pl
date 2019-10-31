@@ -337,8 +337,8 @@ sub show_login_screen {
     = InputForm::display_form(
     $mw, $login_screen,
     $main_font, $main_font_bold,
-    'mion.elka.pw.edu.pl', 'agrudkow',
-    '5Wf<7bJ', $port_pop3,
+    '', '',
+    '', $port_pop3,
     ''
     );
 
@@ -489,7 +489,6 @@ sub handle_log_out {
   $main::host_pop3 = '';
   $main::username_pop3 = '';
   $main::password_pop3 = '';
-  $main::port_pop3 = '';
 
   switch_screen(0);
 }
