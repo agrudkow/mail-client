@@ -13,19 +13,21 @@ use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTPS ();
 use Email::Simple ();
 use Email::Simple::Creator ();
+use Email::Reply;
 
 use feature 'switch';
 use feature 'say';
 use feature 'state';
 use Encode qw(decode encode);
 
-use v5.22.1;
+# use v5.22.1;
 
 use Components::InputForm;
 use Components::EmailListScreen;
 use Components::EmptyLine;
 use Components::SendEmail;
 use Components::ShowEmail;
+use Components::ReplyToEmail;
 
 my $screen;
 my $state = 0;
@@ -35,6 +37,7 @@ my $edit_smtp_screen;
 my $email_list_screen_frame;
 my $send_email_screen_frame;
 my $show_email_screen_frame;
+my $reply_to_email_screen_frame;
 
 our $pop3;
 our $host_pop3;
@@ -84,6 +87,7 @@ sub switch_screen {
   $edit_smtp_screen && $edit_smtp_screen->packForget();
   $send_email_screen_frame && $send_email_screen_frame->packForget();
   $show_email_screen_frame && $show_email_screen_frame->packForget();
+  $reply_to_email_screen_frame && $reply_to_email_screen_frame->packForget();
   $email_list_screen_frame && $email_list_screen_frame->packForget();
 
   given ($_[0]) {
@@ -104,6 +108,9 @@ sub switch_screen {
     }
     when (5) {
       show_email_screen($id);
+    }
+    when (6) {
+      show_reply_to_email_screen($id);
     }
     default {
     }
@@ -233,6 +240,29 @@ sub show_email_screen {
 
 }
 
+sub show_reply_to_email_screen {
+  my $id = $_[0];
+
+  my %smtp = (
+    host => $host_smtp,
+    username => $username_smtp,
+    password => $password_smtp,
+    port => $port_smtp,
+    email => $email_smtp
+  );
+
+  $reply_to_email_screen_frame
+    = $mw->Frame(-background => "lightgrey")->pack(
+    -ipadx => 600,
+    -ipady => 400,
+    );
+
+  my ($body)
+    = ReplyToEmail::display_reply_to_email($reply_to_email_screen_frame, \%smtp,
+    \&handle_reply_to, \&handle_cancel, $main_font, $main_font_bold, $id);
+
+}
+
 sub show_send_email_screen {
   my %smtp = (
     host => $host_smtp,
@@ -277,7 +307,7 @@ sub show_main_list_screen {
     $mw, $email_list_screen_frame,
     \%pop3, \%smtp,
     $main_font, $main_font_bold,
-    \&handle_delete, \&handle_reply_to,
+    \&handle_delete, \&handle_show_reply_to_screen,
     \&handle_click, \&handle_edit_pop3,
     \&handle_edit_smtp, \&handle_show_send_screen,
     \&handle_reload, \&handle_log_out,
@@ -381,11 +411,42 @@ sub handle_delete {
   );
 }
 
-sub handle_reply_to {
+sub handle_show_reply_to_screen {
   my $nr = $_[0];
   $nr++;
+  print("Show reply to screen\n");
+
+  switch_screen(6, $nr);
+}
+
+sub handle_reply_to {
+  my $nr = $_[0];
+  my $response = $_[1];
+
+  my $transport = Email::Sender::Transport::SMTPS->new(
+    { host => $main::host_smtp,
+      port => $main::port_smtp,
+      ssl => "starttls",
+      sasl_username => $main::username_smtp,
+      sasl_password => $main::password_smtp,
+    }
+  ) or die "Unable to connect to POP3 server: " . $! . "\n";
+
+  my $mail = $main::pop3->HeadAndBody($nr);
+  my $parsed = Email::MIME->new($mail);
+
+
+  my $reply = reply
+    to => $parsed,
+    from => $main::email_smtp,
+    body => <<__RESPONSE__;
+$response
+__RESPONSE__
+
+  sendmail($reply, {transport => $transport});
 
   print("Reply to: $nr\n");
+  switch_screen(2);
 }
 
 sub handle_click {
