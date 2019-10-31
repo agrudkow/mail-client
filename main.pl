@@ -15,6 +15,7 @@ use v5.22.1;
 use Components::InputForm;
 use Components::EmptyLine;
 use Components::EmailList;
+use Components::HeaderRow;
 
 my $screen;
 my $state = 0;
@@ -47,8 +48,10 @@ $main_font_bold
   = $mw->fontCreate(-family => 'courier', -size => 14, -weight => 'bold');
 $header_font = $mw->fontCreate(-family => 'courier', -size => 22);
 
-$mw->Button(-text => "Switch screen", -command => sub {switch_screen(0)})
-  ->pack(-ipadx => 40, -side => "bottom");
+show_login_screen();
+
+# $mw->Button(-text => "Switch screen", -command => sub {switch_screen(0)})
+#   ->pack(-ipadx => 40, -side => "bottom");
 
 MainLoop;
 
@@ -165,7 +168,7 @@ sub show_email_list_screen {
     -foreground => 'black',
     -text => "Log out",
     -font => $main_font_bold,
-    -command => sub {say 'Log out';}
+    -command => sub {switch_screen(0);}
   )->pack(-padx => 20, -side => "left");
 
   my $refresh_button = $buttons_frame->Button(
@@ -176,14 +179,20 @@ sub show_email_list_screen {
     -command => sub {say 'Refresh';}
   )->pack(-side => "right");
 
+  # empty line
+  EmptyLine::display_empty_line($email_list_screen, 10);
+
   # email list
   my $email_list_frame
     = $email_list_screen->Frame(-background => "lightgrey")->pack(
-    -fill => 'x',
+    -fill => 'both',
     -side => 'top',
     );
 
-  
+  HeaderRow::display_header_row($email_list_frame, $main_font, $main_font_bold, $mw);
+
+  EmailList::display_email_list($mw, $email_list_frame, $main_font,
+    $main_font_bold, \&handle_delete, \&handle_reply_to);
 }
 
 sub show_login_screen {
@@ -241,5 +250,15 @@ sub connect_pop3 {
   say $password;
   say $port;
   switch_screen(2);
+}
+
+sub handle_delete {
+  my $nr = $_[0];
+  print("Delete: $nr\n");
+}
+
+sub handle_reply_to {
+  my $nr = $_[0];
+  print("Reply to: $nr\n");
 }
 
