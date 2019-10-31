@@ -16,11 +16,16 @@ sub display_row {
   my $main_font_bold = $_[7];
   my $mw = $_[8];
   my $id = $_[9];
+  my $handle_click = $_[10];
 
   my $fullwidth = $mw->reqwidth;
   my $subject_width = $fullwidth / 2 * 0.25;
 
-  my $row = $parent->Frame(-background => "lightgrey", -borderwidth => 1)->pack(
+  my $row = $parent->Frame(
+    -background => "lightgrey",
+    -relief => 'groove',
+    -borderwidth => 1
+  )->pack(
     -fill => 'x',
     -side => 'top',
     -ipady => 5
@@ -44,11 +49,10 @@ sub display_row {
     -width => $subject_width,
   )->pack(-side => 'left', -fill => 'x');
 
-  my $buttons_and_date_frame
-    = $row->Frame(-background => "lightgrey")->pack(
+  my $buttons_and_date_frame = $row->Frame(-background => "lightgrey")->pack(
     -fill => 'x',
     -side => 'right',
-    );
+  );
 
   my $three = $buttons_and_date_frame->Label(
     -background => "lightgrey",
@@ -74,6 +78,35 @@ sub display_row {
     -font => $main_font_bold,
     -command => sub {$handle_reply_to->($id)}
   )->pack(-side => 'right', -fill => 'x', -padx => 5);
+
+  $row->bind(
+    '<Button-1>',
+    sub {
+      $handle_click->($id);
+    }
+  );
+
+  $one->bind(
+    '<Button-1>',
+    sub {
+      $handle_click->($id);
+    }
+  );
+
+  $two->bind(
+    '<Button-1>',
+    sub {
+      $handle_click->($id);
+    }
+  );
+
+  $three->bind(
+    '<Button-1>',
+    sub {
+      $handle_click->($id);
+    }
+  );
+
 }
 
 1;

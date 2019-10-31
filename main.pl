@@ -16,21 +16,23 @@ use Components::InputForm;
 use Components::EmptyLine;
 use Components::EmailList;
 use Components::HeaderRow;
+use Components::EmailListScreen;
 
 my $screen;
 my $state = 0;
 my $login_screen;
-my $email_list_screen;
+my $email_list_screen_frame;
 
-my $host_pop3;
-my $username_pop3;
-my $password_pop3;
-my $port_pop3;
+my $host_pop3 = 'mion.elka.pw.edu.pl';
+my $username_pop3 = 'agrudkow';
+my $password_pop3 = '*';
+my $port_pop3 = 995;
 
-my $host_smtp;
-my $username_smtp;
-my $password_smtp;
-my $port_smtp;
+my $host_smtp = 'mion.elka.pw.edu.pl';
+my $email_smtp = 'A.Grudkowski@stud.elka.pw.edu.pl';
+my $username_smtp = 'agrudkow';
+my $password_smtp = '*';
+my $port_smtp = '587';
 
 my $main_font;
 my $main_font_bold;
@@ -50,9 +52,6 @@ $header_font = $mw->fontCreate(-family => 'courier', -size => 22);
 
 show_login_screen();
 
-# $mw->Button(-text => "Switch screen", -command => sub {switch_screen(0)})
-#   ->pack(-ipadx => 40, -side => "bottom");
-
 MainLoop;
 
 sub switch_screen {
@@ -60,15 +59,17 @@ sub switch_screen {
 
   given ($_[0]) {
     when (0) {
-      $email_list_screen && $email_list_screen->packForget();
+      $email_list_screen_frame && $email_list_screen_frame->packForget();
       show_login_screen();
     }
     when (1) {$login_screen && $login_screen->packForget();}
     when (2) {
       $login_screen && $login_screen->packForget();
-      show_email_list_screen();
+      show_main_list_screen();
     }
-    when (3) {$email_list_screen && $email_list_screen->packForget();}
+    when (3) {
+      $email_list_screen_frame && $email_list_screen_frame->packForget();
+    }
     default {
     }
   }
@@ -78,121 +79,31 @@ sub switch_screen {
   say $state;
 }
 
-sub show_email_list_screen {
-  $email_list_screen = $mw->Frame(-background => "grey")->pack(
+sub show_main_list_screen {
+  $email_list_screen_frame = $mw->Frame(-background => "grey")->pack(
     -ipadx => 600,
     -ipady => 400,
   );
 
-  my $host = 'elka.pw.edu.pl';
-  my $username = 'agrudkow';
+  my %pop3 = (
+    host => $host_pop3,
+    username => $username_pop3,
+    password => $password_pop3,
+    port => $port_pop3
+  );
+  my %smtp = (
+    host => $host_smtp,
+    username => $username_smtp,
+    password => $password_smtp,
+    port => $port_smtp,
+    email => $email_smtp
+  );
 
-  # pop3 config
-  my $top_bar_pop3
-    = $email_list_screen->Frame(-background => "lightgrey")->pack(
-    -fill => 'x',
-    -side => 'top',
-    );
-
-  my $info_host_pop3 = $top_bar_pop3->Label(
-    -background => "lightgrey",
-    -foreground => 'black',
-    -text => "POP3   host: $host",
-    -font => $main_font_bold
-  )->pack(-side => 'left', -anchor => 'n');
-
-  my $info_username_pop3 = $top_bar_pop3->Label(
-    -background => "lightgrey",
-    -foreground => 'black',
-    -text => "username: $username",
-    -font => $main_font_bold
-  )->pack(-padx => 40, -side => 'left', -anchor => 'n');
-
-  my $edit_pop3_config_button = $top_bar_pop3->Button(
-    -background => "lightgrey",
-    -foreground => 'black',
-    -text => "Edit POP3 configuration",
-    -font => $main_font_bold,
-    -command => sub {say 'Edit POP3 configuration';}
-  )->pack(-side => "right");
-
-  # smtp config
-  my $top_bar_smtp
-    = $email_list_screen->Frame(-background => "lightgrey")->pack(
-    -fill => 'x',
-    -side => 'top',
-    );
-
-  my $info_host_smtp = $top_bar_smtp->Label(
-    -background => "lightgrey",
-    -foreground => 'black',
-    -text => "SMTP   host: $host",
-    -font => $main_font_bold
-  )->pack(-side => 'left', -anchor => 'n');
-
-  my $info_username_smtp = $top_bar_smtp->Label(
-    -background => "lightgrey",
-    -foreground => 'black',
-    -text => "username: $username",
-    -font => $main_font_bold
-  )->pack(-padx => 40, -side => 'left', -anchor => 'n');
-
-  my $edit_smtp_config_button = $top_bar_smtp->Button(
-    -background => "lightgrey",
-    -foreground => 'black',
-    -text => "Edit SMTP configuration",
-    -font => $main_font_bold,
-    -command => sub {say 'Edit SMTP configuration';}
-  )->pack(-side => "right");
-
-  # empty line
-  EmptyLine::display_empty_line($email_list_screen);
-
-  # butons frame
-  my $buttons_frame
-    = $email_list_screen->Frame(-background => "lightgrey")->pack(
-    -fill => 'x',
-    -side => 'top',
-    );
-
-  my $send_email_button = $buttons_frame->Button(
-    -background => "lightgrey",
-    -foreground => 'black',
-    -text => "Send email",
-    -font => $main_font_bold,
-    -command => sub {say 'Send email';}
-  )->pack(-side => "left");
-
-  my $log_out_button = $buttons_frame->Button(
-    -background => "lightgrey",
-    -foreground => 'black',
-    -text => "Log out",
-    -font => $main_font_bold,
-    -command => sub {switch_screen(0);}
-  )->pack(-padx => 20, -side => "left");
-
-  my $refresh_button = $buttons_frame->Button(
-    -background => "lightgrey",
-    -foreground => 'black',
-    -text => "Refresh",
-    -font => $main_font_bold,
-    -command => sub {say 'Refresh';}
-  )->pack(-side => "right");
-
-  # empty line
-  EmptyLine::display_empty_line($email_list_screen, 10);
-
-  # email list
-  my $email_list_frame
-    = $email_list_screen->Frame(-background => "lightgrey")->pack(
-    -fill => 'both',
-    -side => 'top',
-    );
-
-  HeaderRow::display_header_row($email_list_frame, $main_font, $main_font_bold, $mw);
-
-  EmailList::display_email_list($mw, $email_list_frame, $main_font,
-    $main_font_bold, \&handle_delete, \&handle_reply_to);
+  EmailListScreen::display_email_list_screen(
+    $mw, $email_list_screen_frame, \%pop3,
+    \%smtp, $main_font, $main_font_bold,
+    \&handle_delete, \&handle_reply_to, \&handle_click
+  );
 }
 
 sub show_login_screen {
@@ -260,5 +171,10 @@ sub handle_delete {
 sub handle_reply_to {
   my $nr = $_[0];
   print("Reply to: $nr\n");
+}
+
+sub handle_click {
+  my $nr = $_[0];
+  print("Show msg: $nr\n");
 }
 

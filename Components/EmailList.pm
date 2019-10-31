@@ -15,6 +15,8 @@ sub display_email_list {
   my $main_font_bold = $_[3];
   my $handle_delete = $_[4];
   my $handle_reply_to = $_[5];
+  my $handle_click = $_[6];
+  my $hash = $_[7];
 
   my $fullheight = $mw->screenheight;
 
@@ -45,7 +47,8 @@ sub display_email_list {
       $main_font,
       $main_font_bold,
       $mw,
-      $i
+      $i,
+      $handle_click
     );
   }
 
