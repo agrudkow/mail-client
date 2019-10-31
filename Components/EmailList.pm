@@ -26,7 +26,8 @@ sub display_email_list {
     -height => $fullheight,
     -scrollbars => 'oe',
     -sticky => 'nwse',
-    -gridded => 'y'
+    -gridded => 'y',
+    -background => "lightgrey"
   );
 
   $email_list->Frame(-background => "lightgrey");
@@ -36,27 +37,26 @@ sub display_email_list {
     -side => 'top',
   );
 
-  for my $i (0 .. ($main::pop3->Count() - 1)) {
-    my $from = $emails->[$i]{from};
+  for (my $i = $main::pop3->Count(); $i >= 1; $i--) {
+    my $from = $emails->[$i - 1]{from};
     $from =~ s/<.*>//;
-    my $date = $emails->[$i]{date};
+    my $date = $emails->[$i - 1]{date};
     $date =~ s/.*,.//;
     $date =~ s/.[-|+].*//;
     Row::display_row(
       $email_list,
       $from,
-      $emails->[$i]{subject},
+      $emails->[$i - 1]{subject},
       $date,
       $handle_reply_to,
       $handle_delete,
       $main_font,
       $main_font_bold,
       $mw,
-      $i,
+      ($i - 1),
       $handle_click
     );
   }
-
 }
 
 1;

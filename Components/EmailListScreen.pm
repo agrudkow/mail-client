@@ -41,7 +41,7 @@ sub display_email_list_screen {
   # pop3 config
   my $top_bar_pop3
     = $email_list_screen->Frame(-background => "lightgrey")->pack(
-    -fill => 'x',
+    -fill => 'both',
     -side => 'top',
     );
 
@@ -147,7 +147,7 @@ sub display_email_list_screen {
     -fill => 'both',
     -side => 'top',
     );
-    
+
   HeaderRow::display_header_row($email_list_frame, $main_font,
     $main_font_bold, $mw);
 

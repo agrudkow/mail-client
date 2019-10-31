@@ -1,25 +1,24 @@
-package SendEmail;
+package ShowEmail;
 
 use strict;
 use warnings;
 
-sub display_send_email {
-  my $send_email_screen_frame = $_[0];
+sub display_show_email {
+  my $show_email_screen_frame = $_[0];
+  my $email_smtp = $_[1];
+  my $handle_exit = $_[2];
+  my $main_font = $_[3];
+  my $main_font_bold = $_[4];
+  my $emails = $_[5];
+  my $id = $_[6];
 
-  my $smtp = $_[1];
+  my $sender = $emails->[$id]{from};
+  my $subject = $emails->[$id]{subject};
+  my $body = $emails->[$id]{body};
 
-  my $handle_send = $_[2];
-  my $handle_cancel = $_[3];
-  my $main_font = $_[4];
-  my $main_font_bold = $_[5];
 
-  my $email_smtp = $smtp->{email};
 
-  my $send_to;
-  my $subject;
-  my $body;
-
-  my $from_frame = $send_email_screen_frame->Frame(-background => "lightgrey")
+  my $from_frame = $show_email_screen_frame->Frame(-background => "lightgrey")
     ->pack(-fill => 'x', -side => 'top');
 
   $from_frame->Label(
@@ -35,7 +34,7 @@ sub display_send_email {
     -background => 'grey',
     -foreground => 'black',
     -font => $main_font,
-    -textvariable => \$email_smtp,
+    -textvariable => \$sender,
     -state => 'disabled',
     -disabledforeground => 'black'
   )->pack(
@@ -44,7 +43,7 @@ sub display_send_email {
     -fill => "x"
   );
 
-  my $to_frame = $send_email_screen_frame->Frame(-background => "lightgrey")
+  my $to_frame = $show_email_screen_frame->Frame(-background => "lightgrey")
     ->pack(-fill => 'x', -side => 'top');
 
   $to_frame->Label(
@@ -56,16 +55,19 @@ sub display_send_email {
     -anchor => 'w'
   )->pack(-side => 'left');
 
-  $send_to = $to_frame->Entry(
+  $to_frame->Entry(
     -background => 'grey',
     -foreground => 'black',
     -font => $main_font,
+        -textvariable => \$email_smtp,
+    -state => 'disabled',
+    -disabledforeground => 'black'
   )->pack(
     -ipadx => 50,
     -ipady => 5,
     -fill => "x"
   );
-  $to_frame = $send_email_screen_frame->Frame(-background => "lightgrey")
+  $to_frame = $show_email_screen_frame->Frame(-background => "lightgrey")
     ->pack(-fill => 'x', -side => 'top');
 
   $to_frame->Label(
@@ -77,10 +79,13 @@ sub display_send_email {
     -anchor => 'w'
   )->pack(-side => 'left');
 
-  $subject = $to_frame->Entry(
+  $to_frame->Entry(
     -background => 'grey',
     -foreground => 'black',
     -font => $main_font,
+        -textvariable => \$subject,
+    -state => 'disabled',
+    -disabledforeground => 'black'
   )->pack(
     -ipadx => 50,
     -ipady => 5,
@@ -88,9 +93,9 @@ sub display_send_email {
   );
 
   # empty line
-  EmptyLine::display_empty_line($send_email_screen_frame);
+  EmptyLine::display_empty_line($show_email_screen_frame);
 
-  $send_email_screen_frame->Label(
+  $show_email_screen_frame->Label(
     -background => "lightgrey",
     -foreground => 'black',
     -text => "Text:",
@@ -98,32 +103,21 @@ sub display_send_email {
     -anchor => 'w'
   )->pack(-side => 'top', -fill => 'x');
 
-  $body = $send_email_screen_frame->Text(
+  my $text_box = $show_email_screen_frame->Text(
     -background => "lightgrey",
     -foreground => 'black',
     -font => $main_font,
   )->pack(-side => 'top', -fill => 'x');
 
-  my $send_button = $send_email_screen_frame->Button(
-    -background => "lightgrey",
-    -foreground => 'black',
-    -text => "Send",
-    -font => $main_font_bold,
-    -command => sub {
-      $handle_send->($send_to->get(), $subject->get(),
-        $body->get('1.0', 'end-1c'));
-    }
-  )->pack(-padx => 5, -side => "right");
+  $text_box->insert('end', $body);
 
-  my $cancel_button = $send_email_screen_frame->Button(
+  my $cancel_button = $show_email_screen_frame->Button(
     -background => "lightgrey",
     -foreground => 'black',
     -text => "Cancel",
     -font => $main_font_bold,
-    -command => sub {$handle_cancel->()}
-  )->pack(-padx => 5, -side => "left");
-
-  return ($send_to, $subject, $body);
+    -command => sub {$handle_exit->()}
+  )->pack(-padx => 5, -side => "right");
 }
 
 1;
