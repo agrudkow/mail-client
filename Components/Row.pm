@@ -18,8 +18,7 @@ sub display_row {
   my $id = $_[9];
   my $handle_click = $_[10];
 
-  my $fullwidth = $mw->reqwidth;
-  my $subject_width = $fullwidth / 2 * 0.25;
+  my $subject_width = 55;
 
   my $row = $parent->Frame(
     -background => "lightgrey",

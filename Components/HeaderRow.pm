@@ -9,8 +9,7 @@ sub display_header_row {
   my $main_font_bold = $_[2];
   my $mw = $_[3];
 
-  my $fullwidth = $mw->reqwidth;
-  my $subject_width = $fullwidth / 2 * 0.25;
+  my $subject_width = 55;
 
   my $row
     = $parent->Frame(-background => "lightgrey", -borderwidth => 1)->pack(

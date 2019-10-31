@@ -20,6 +20,11 @@ sub display_email_list_screen {
   my $handle_delete = $_[6];
   my $handle_reply_to = $_[7];
   my $handle_click = $_[8];
+  my $handle_edit_pop3 = $_[9];
+  my $handle_edit_smtp = $_[10];
+  my $handle_send = $_[11];
+  my $handle_reload = $_[12];
+  my $handle_log_out = $_[13];
 
   my $host_pop3 = $pop3->{host};
   my $username_pop3 = $pop3->{username};
@@ -62,7 +67,7 @@ sub display_email_list_screen {
     -foreground => 'black',
     -text => "Edit POP3 configuration",
     -font => $main_font_bold,
-    -command => sub {say 'Edit POP3 configuration';}
+    -command => sub {$handle_edit_pop3->()}
   )->pack(-side => "right");
 
   # smtp config
@@ -95,7 +100,7 @@ sub display_email_list_screen {
     -foreground => 'black',
     -text => "Edit SMTP configuration",
     -font => $main_font_bold,
-    -command => sub {say 'Edit SMTP configuration';}
+    -command => sub {$handle_edit_smtp->()}
   )->pack(-side => "right");
 
   # empty line
@@ -113,7 +118,7 @@ sub display_email_list_screen {
     -foreground => 'black',
     -text => "Send email",
     -font => $main_font_bold,
-    -command => sub {say 'Send email';}
+    -command => sub {$handle_send->()}
   )->pack(-side => "left");
 
   my $log_out_button = $buttons_frame->Button(
@@ -121,7 +126,7 @@ sub display_email_list_screen {
     -foreground => 'black',
     -text => "Log out",
     -font => $main_font_bold,
-    -command => sub {switch_screen(0);}
+    -command => sub {$handle_log_out->()}
   )->pack(-padx => 20, -side => "left");
 
   my $refresh_button = $buttons_frame->Button(
@@ -129,7 +134,7 @@ sub display_email_list_screen {
     -foreground => 'black',
     -text => "Refresh",
     -font => $main_font_bold,
-    -command => sub {say 'Refresh';}
+    -command => sub {$handle_reload->()}
   )->pack(-side => "right");
 
   # empty line
