@@ -18,7 +18,7 @@ sub display_row {
   my $id = $_[9];
   my $handle_click = $_[10];
 
-  my $subject_width = 55;
+  my $subject_width = 62;
 
   my $row = $parent->Frame(
     -background => "lightgrey",
@@ -58,7 +58,7 @@ sub display_row {
     -foreground => 'black',
     -text => $date,
     -font => $main_font,
-    -width => 15,
+    -width => 23,
     -anchor => 'w'
   )->pack(-side => 'left', -fill => 'x', -padx => 5);
 

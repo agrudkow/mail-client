@@ -46,7 +46,7 @@ sub display_header_row {
     -foreground => 'black',
     -text => 'Date',
     -font => $main_font_bold,
-    -width => 27,
+    -width => 34,
     -anchor => 'w'
   )->pack(-side => 'left', -fill => 'x');
 }

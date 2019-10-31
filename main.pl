@@ -5,10 +5,19 @@ use warnings;
 use Tk::Table;
 use Tk::DialogBox;
 use Tk::Font;
+use Mail::POP3Client;
+use MIME::Parser;
+use Email::MIME;
+use IO::Handle;
+use Email::Sender::Simple qw(sendmail);
+use Email::Sender::Transport::SMTPS ();
+use Email::Simple ();
+use Email::Simple::Creator ();
 
 use feature 'switch';
 use feature 'say';
 use feature 'state';
+use Encode qw(decode encode);
 
 use v5.22.1;
 
@@ -23,16 +32,22 @@ my $login_screen;
 my $email_list_screen_frame;
 my $send_email_screen_frame;
 
+our $pop3;
 our $host_pop3;
 our $username_pop3;
 our $password_pop3;
 our $port_pop3 = 995;
 
+# our $smtp;
 our $host_smtp;
 our $email_smtp;
 our $username_smtp;
 our $password_smtp;
 our $port_smtp = 587;
+
+# emails array
+our @emails;
+our $emails_ref = \@emails;
 
 my $main_font;
 my $main_font_bold;
@@ -45,13 +60,14 @@ $mw->title("Mail Client");
 $mw->configure(-background => "lightgrey");
 
 # Create fonts
-$main_font = $mw->fontCreate(-family => 'courier', -size => 14);
+$main_font = $mw->fontCreate(-family => 'courier', -size => 12);
 $main_font_bold
-  = $mw->fontCreate(-family => 'courier', -size => 14, -weight => 'bold');
+  = $mw->fontCreate(-family => 'courier', -size => 12, -weight => 'bold');
 $header_font = $mw->fontCreate(-family => 'courier', -size => 22);
 
 # Initial screen
 show_login_screen();
+
 # show_send_email_screen();
 
 MainLoop;
@@ -97,9 +113,9 @@ sub show_send_email_screen {
     -ipady => 400,
   );
 
-  my ($reciever, $subject, $body) = SendEmail::display_send_email($send_email_screen_frame, \%smtp,
+  my ($reciever, $subject, $body)
+    = SendEmail::display_send_email($send_email_screen_frame, \%smtp,
     \&handle_send, \&handle_cancel, $main_font, $main_font_bold);
-
 
 }
 
@@ -130,7 +146,8 @@ sub show_main_list_screen {
     \&handle_delete, \&handle_reply_to,
     \&handle_click, \&handle_edit_pop3,
     \&handle_edit_smtp, \&handle_show_send_screen,
-    \&handle_reload, \&handle_log_out
+    \&handle_reload, \&handle_log_out,
+    \@emails
   );
 }
 
@@ -153,8 +170,13 @@ sub show_login_screen {
 
   #display input form
   my ($host_input, $username_input, $password_input, $port_input)
-    = InputForm::display_form($mw, $login_screen, $main_font,
-    $main_font_bold, '', '', '', '', '');
+    = InputForm::display_form(
+    $mw, $login_screen,
+    $main_font, $main_font_bold,
+    'mion.elka.pw.edu.pl', 'agrudkow',
+    '5Wf<7bJ', $port_pop3,
+    ''
+    );
 
   #display submit button
   my $log_in
@@ -184,24 +206,32 @@ sub log_in {
   my $password = $_[2];
   my $port = $_[3];
 
-  say $host;
-  say $username;
-  say $password;
-  say $port;
-
   $main::host_pop3 = $host;
   $main::username_pop3 = $username;
-  $main::passowrd_pop3 = $password;
+  $main::password_pop3 = $password;
   $main::port_pop3 = $port;
 
   $main::host_smtp = $host;
   $main::username_smtp = $username;
   $main::email_smtp = $username . '@' . $host_smtp;
-  $main::passowrd_smtp = $password;
+  $main::password_smtp = $password;
 
-  say $email_smtp;
 
-  switch_screen(2);
+  $main::pop3 = new Mail::POP3Client(
+    USER => $main::username_pop3,
+    PASSWORD => $main::password_pop3,
+    HOST => $main::host_pop3,
+    PORT => $main::port_pop3,
+    AUTH_MODE => 'PASS',
+    USESSL => 1,
+
+    # DEBUG => 1
+  );
+
+  if ($pop3->Count() ne -1) {
+    fetch_emails();
+    switch_screen(2);
+  }
 }
 
 sub handle_delete {
@@ -238,6 +268,13 @@ sub handle_reload {
 
 sub handle_log_out {
   print("Log out\n");
+  $pop3->close();
+
+  $main::host_pop3 = '';
+  $main::username_pop3 = '';
+  $main::password_pop3 = '';
+  $main::port_pop3 = '';
+
   switch_screen(0);
 }
 
@@ -254,10 +291,56 @@ sub handle_send {
   my $subject = $_[1];
   my $body = $_[2];
 
-  say $send_to;
-  say $subject;
-  say $body;
+  my $smtpserver = 'mion.elka.pw.edu.pl';
+  my $smtpport = 587;
+  my $smtpuser = 'agrudkow';
+  my $smtppassword = '5Wf<7bJ';
+
+  my $transport = Email::Sender::Transport::SMTPS->new(
+    { host => $main::host_smtp,
+      port => $main::port_smtp,
+      ssl => "starttls",
+      sasl_username => $main::username_smtp,
+      sasl_password => $main::password_smtp,
+    }
+  ) or die "Unable to connect to POP3 server: " . $! . "\n";
+
+  my $email = Email::Simple->create(
+    header => [
+      To => $send_to,
+      From => $email_smtp,
+      Subject => $subject,
+    ],
+    body => $body,
+  ) or die 'Unable to create email';
+
+  sendmail($email, {transport => $transport});
   print("Send\n");
   switch_screen(2);
+}
+
+sub fetch_emails {
+  for (my $i = $pop3->Count(); $i >= 1; $i--) {
+    my $mail = $pop3->HeadAndBody($i);
+    my $parser = Email::MIME->new($mail);
+
+    my $from = encode('utf8', $parser->header('From'));
+    my $date = encode('utf8', $parser->header('Date'));
+    my $subject = encode('utf8', $parser->header('Subject'));
+    my $body;
+    $parser->walk_parts(
+      sub {
+        my ($part) = @_;
+        return if $part->subparts;
+        if ($part->content_type =~ m{text/plain}i) {
+          $body = $part->body_str;
+        }
+      }
+    );
+
+    my %msg_data
+      = (from => $from, date => $date, subject => $subject, body => $body);
+    push(@emails, \%msg_data);
+  }
 }
 

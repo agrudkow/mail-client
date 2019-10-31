@@ -16,7 +16,7 @@ sub display_email_list {
   my $handle_delete = $_[4];
   my $handle_reply_to = $_[5];
   my $handle_click = $_[6];
-  my $hash = $_[7];
+  my $emails = $_[7];
 
   my $fullheight = $mw->screenheight;
 
@@ -36,12 +36,17 @@ sub display_email_list {
     -side => 'top',
   );
 
-  for my $i (1 .. 25) {
+  for my $i (0 .. ($main::pop3->Count() - 1)) {
+    my $from = $emails->[$i]{from};
+    $from =~ s/<.*>//;
+    my $date = $emails->[$i]{date};
+    $date =~ s/.*,.//;
+    $date =~ s/.[-|+].*//;
     Row::display_row(
       $email_list,
-      'Artur',
-      'Subjexct csocodscsdsssssssssssssss  ssssssss ddddddddddddddd dddddddddddddddddd dddddddddd',
-      '10.10.2010',
+      $from,
+      $emails->[$i]{subject},
+      $date,
       $handle_reply_to,
       $handle_delete,
       $main_font,

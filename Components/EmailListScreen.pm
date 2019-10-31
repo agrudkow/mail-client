@@ -25,6 +25,7 @@ sub display_email_list_screen {
   my $handle_send = $_[11];
   my $handle_reload = $_[12];
   my $handle_log_out = $_[13];
+  my $emails = $_[14];
 
   my $host_pop3 = $pop3->{host};
   my $username_pop3 = $pop3->{username};
@@ -146,12 +147,12 @@ sub display_email_list_screen {
     -fill => 'both',
     -side => 'top',
     );
-
+    
   HeaderRow::display_header_row($email_list_frame, $main_font,
     $main_font_bold, $mw);
 
   EmailList::display_email_list($mw, $email_list_frame, $main_font,
-    $main_font_bold, $handle_delete, $handle_reply_to, $handle_click);
+    $main_font_bold, $handle_delete, $handle_reply_to, $handle_click, $emails);
 }
 
 1;
